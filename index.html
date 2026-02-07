@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ELIMINATOR</title>
+  <style>
+    :root{
+      --bg:#f4f6fb; --fg:#0d1321; --muted:rgba(13,19,33,.62);
+      --glass:rgba(255,255,255,.58); --glass2:rgba(255,255,255,.34);
+      --lineA:rgba(13,19,33,.14); --line:var(--lineA);
+      --shadow:0 18px 60px rgba(0,0,0,.10); --blur:18px;
+      --accent:rgba(0,140,255,.16); --accent2:rgba(0,140,255,.32);
+      --barAccent:var(--accent); --barAccent2:var(--accent2);
+      --radius:6px; --radius2:4px; --barH:38px; --chipH:18px;
+      --appW:min(1320px,96vw); --vpad:clamp(10px,2.2vh,18px); --hpad:clamp(10px,2.2vw,18px);
+      --font: ui-sans-serif,system-ui,-apple-system,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial;
+      --mono: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+      --uiScale:1.00; --titleScale:1.18; --taskScale:1.50;
+      --btnFill:0;
+      --drawerW:460px; --rightW:520px;
+    }
+    [data-theme="dark"]{
+      --bg:#0b0f17; --fg:#eaf0ff; --muted:rgba(234,240,255,.62);
+      --glass:rgba(18,24,38,.60); --glass2:rgba(18,24,38,.36);
+      --lineA:rgba(234,240,255,.14); --shadow:0 18px 80px rgba(0,0,0,.36);
+      --blur:20px;
+      --accent:rgba(0,255,140,.14); --accent2:rgba(0,255,140,.28);
+      --barAccent:var(--accent); --barAccent2:var(--accent2);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:var(--font); color:var(--fg); overflow-x:hidden;
+      background:
+        radial-gradient(1200px 700px at 25% 15%, rgba(255,255,255,.45), transparent 60%),
+        radial-gradient(1000px 680px at 80% 30%, rgba(0,0,0,.06), transparent 60%),
+        var(--bg);
+    }
+    [data-theme="dark"] body{
+      background:
+        radial-gradient(1200px 700px at 25% 15%, rgba(0,255,140,.055), transparent 60%),
+        radial-gradient(1100px 720px at 80% 30%, rgba(0,140,255,.045), transparent 60%),
+        var(--bg);
+    }
+
+    .wrap{min-height:100%;display:flex;flex-direction:column;gap:clamp(10px,1.6vh,14px);padding:var(--vpad) var(--hpad) calc(var(--vpad) + 10px);align-items:center}
+    .topbar{
+      width:var(--appW);display:flex;justify-content:space-between;align-items:center;gap:10px;
+      padding:10px;border:1px solid var(--line);border-radius:var(--radius);
+      background:var(--glass);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);
+      position:sticky;top:8px;z-index:70;
+    }
+    .topbar .left,.topbar .right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+    .topbar .right{justify-content:flex-end}
+
+    .btn{
+      border:1px solid var(--line); background:transparent; color:var(--fg);
+      border-radius:var(--radius2);
+      padding:calc(8px * var(--uiScale)) calc(10px * var(--uiScale));
+      font-size:calc(12px * var(--uiScale));
+      letter-spacing:.08em; text-transform:uppercase;
+      cursor:pointer; user-select:none; white-space:nowrap;
+      transition:transform 140ms ease, background 120ms ease, opacity 120ms ease;
+    }
+    .btn:hover{background:rgba(0,0,0,.04)}
+    [data-theme="dark"] .btn:hover{background:rgba(255,255,255,.05)}
+    .btn:active{transform:translateY(1px)}
+    .btn.icon{width:calc(40px * var(--uiScale));height:calc(36px * var(--uiScale));display:grid;place-items:center;padding:0;font-family:var(--mono);letter-spacing:0;text-transform:none;font-size:calc(15px * var(--uiScale))}
+    [data-buttons="filled"]{--btnFill:1}
+    .btn.primary{
+      background:linear-gradient(180deg, rgba(255,255,255, calc(.30 * var(--btnFill))), rgba(0,0,0,0));
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    [data-theme="dark"] .btn.primary{
+      background:linear-gradient(180deg, rgba(255,255,255, calc(.12 * var(--btnFill))), rgba(0,0,0,0));
+    }
+    [data-borders="off"]{--line:rgba(0,0,0,0)}
+
+    .pill{
+      padding:calc(6px * var(--uiScale)) calc(10px * var(--uiScale));
+      border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.03);
+      color:var(--muted);font-size:calc(12px * var(--uiScale));font-family:var(--mono);
+      white-space:nowrap;user-select:none;
+    }
+    [data-theme="dark"] .pill{background:rgba(255,255,255,.04)}
+    .pill.hidden{display:none}
+
+    .hero{width:var(--appW);display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 8px 0}
+    .title{font-size:calc(clamp(54px,5.8vw,92px) * var(--titleScale));letter-spacing:.22em;text-transform:uppercase;margin:6px 0 0;font-weight:820;line-height:1.02;text-align:center}
+    .tag{font-size:13px;color:var(--muted);text-align:center;max-width:78ch;padding:0 8px;min-height:18px}
+
+    .main{width:var(--appW);display:flex;flex-direction:column;gap:clamp(12px,2.2vh,18px);align-items:center;flex:1;justify-content:center}
+    .barWrap{
+      width:100%;display:flex;flex-direction:column;gap:10px;padding:18px 16px;
+      border:1px solid var(--line);border-radius:var(--radius);
+      background:var(--glass);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow)
+    }
+    .barRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .barLabel{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+    .bar{width:100%;height:var(--barH);border:1px solid var(--line);background:rgba(0,0,0,.03);border-radius:var(--radius2);position:relative;overflow:hidden}
+    [data-theme="dark"] .bar{background:rgba(255,255,255,.04)}
+    .barFill{position:absolute;inset:0;width:100%;
+      background:radial-gradient(800px 140px at 20% 50%, var(--barAccent2), transparent 55%), linear-gradient(90deg, var(--barAccent), transparent 70%);
+      transition:width 260ms ease
+    }
+    .barPct{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:var(--fg);opacity:.92;pointer-events:none}
+
+    .current{
+      width:100%;padding:16px 16px 14px;border:1px solid var(--line);border-radius:var(--radius);
+      background:var(--glass);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);
+      display:flex;flex-direction:column;gap:14px
+    }
+    .taskName{font-size:calc(clamp(38px,4.8vw,76px) * var(--taskScale));font-weight:860;letter-spacing:.01em;text-align:center;line-height:1.06;padding:4px 6px;word-break:break-word}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:0}
+    .chip{width:var(--chipH);height:var(--chipH);border-radius:2px;border:1px solid var(--line);background:rgba(0,0,0,.03)}
+    [data-theme="dark"] .chip{background:rgba(255,255,255,.04)}
+    .chip.on{background:var(--barAccent2)}
+
+    .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center}
+    .roulette{
+      width:clamp(110px,14vw,170px);height:clamp(110px,14vw,170px);border-radius:999px;border:1px solid var(--line);
+      background:radial-gradient(circle at 30% 30%, var(--glass2), transparent 60%), linear-gradient(180deg, var(--glass2), transparent);
+      backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;user-select:none;
+      transition:transform 140ms ease;position:relative;overflow:hidden
+    }
+    .roulette:active{transform:translateY(1px) scale(.99)}
+    .rouletteText{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg);opacity:.92;font-weight:820;font-family:var(--mono)}
+    .rouletteRing{position:absolute;inset:10px;border-radius:999px;border:1px dashed var(--line);opacity:.85}
+    .rouletteNeedle{position:absolute;top:10px;left:50%;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid rgba(0,0,0,.18);transform:translateX(-50%);opacity:.9}
+    [data-theme="dark"] .rouletteNeedle{border-bottom-color:rgba(255,255,255,.18)}
+    .rouletteSpin{animation:spin 860ms cubic-bezier(.08,.92,.20,1) 1}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(1080deg)}}
+
+    .bomb{
+      min-width:clamp(180px,26vw,300px);padding:14px 16px;border-radius:var(--radius2);border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--glass2), transparent);cursor:pointer;text-transform:uppercase;letter-spacing:.10em;font-size:12px;
+      display:flex;align-items:center;justify-content:center;gap:12px;user-select:none;box-shadow:var(--shadow);transition:transform 140ms ease
+    }
+    .bomb:hover{background:rgba(0,0,0,.03)}
+    [data-theme="dark"] .bomb:hover{background:rgba(255,255,255,.04)}
+    .bomb:active{transform:translateY(1px) scale(.99)}
+    .bomb .em{font-family:var(--mono);font-size:16px;opacity:.92}
+    .bomb .label{display:flex;flex-direction:column;line-height:1.10;align-items:center}
+    .bomb .label span{font-size:12px;font-family:var(--mono)}
+    .bomb .label small{font-size:10px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-family:var(--mono)}
+
+    .miniRow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+    .miniIcon{
+      width:56px;height:56px;border-radius:var(--radius2);border:1px solid var(--line);display:grid;place-items:center;
+      cursor:pointer;background:transparent;box-shadow:var(--shadow);font-family:var(--mono);font-size:15px;user-select:none;
+      transition:transform 140ms ease, background 120ms ease;letter-spacing:.06em
+    }
+    .miniIcon:hover{background:rgba(0,0,0,.03)}
+    [data-theme="dark"] .miniIcon:hover{background:rgba(255,255,255,.04)}
+    .miniIcon:active{transform:translateY(1px) scale(.99)}
+    .miniLabel{width:auto;padding:0 12px;font-size:12px;text-transform:uppercase}
+
+    .belowList{
+      width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--glass);
+      backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);padding:10px;display:none
+    }
+    .belowList.show{display:block}
+    .belowHead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:8px}
+    .belowHead .h{font-size:12px;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+
+    .taskRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 6px;border-bottom:1px solid var(--line)}
+    .taskRow:last-child{border-bottom:none}
+    .taskRow .t{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg)}
+    .taskRow .meta{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+    .taskRow .tools{display:flex;gap:6px;align-items:center}
+    .toolBtn{width:36px;height:32px;border-radius:var(--radius2);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;background:transparent;font-family:var(--mono);font-size:12px;user-select:none}
+    .toolBtn:hover{background:rgba(0,0,0,.03)}
+    [data-theme="dark"] .toolBtn:hover{background:rgba(255,255,255,.04)}
+
+    .small{font-size:12px;color:var(--muted);font-family:var(--mono)}
+    .focusOn .topbar .btn:not(.keepFocus), .focusOn .topbar .right{display:none !important}
+    .focusOn .topbar{justify-content:center}
+    .focusOn .topbar .left{width:100%;justify-content:center}
+
+    .drawerBack,.rightBack,.modalBack{position:fixed;inset:0;display:none}
+    .drawerBack{background:rgba(0,0,0,.22);backdrop-filter:blur(10px);z-index:80}
+    .rightBack{background:rgba(0,0,0,.12);backdrop-filter:blur(10px);z-index:75}
+    .modalBack{background:rgba(0,0,0,.25);backdrop-filter:blur(14px);z-index:110}
+
+    .drawer,.rightPanel{
+      position:fixed;top:0;height:100%;background:var(--glass);backdrop-filter:blur(var(--blur));
+      box-shadow:var(--shadow);display:flex;flex-direction:column
+    }
+    .drawer{left:0;width:min(var(--drawerW),94vw);border-right:1px solid var(--line);transform:translateX(-105%);transition:transform 220ms ease;z-index:90}
+    .drawer.open{transform:translateX(0)}
+    .rightPanel{right:0;width:min(var(--rightW),94vw);border-left:1px solid var(--line);transform:translateX(105%);transition:transform 220ms ease;z-index:85}
+    .rightPanel.open{transform:translateX(0)}
+    .drawerTop,.rightTop{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);gap:10px}
+    .drawerTitle,.rightTitle{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+    .drawerResizer,.rightResizer{position:absolute;top:0;width:12px;height:100%;cursor:ew-resize;opacity:0}
+    .drawerResizer{right:-6px}
+    .rightResizer{left:-6px}
+    .drawer:hover .drawerResizer,.rightPanel:hover .rightResizer{opacity:1}
+
+    .tabs{display:flex;gap:8px;padding:10px 12px 6px;flex-wrap:wrap}
+    .tab{padding:7px 9px;border-radius:var(--radius2);border:1px solid var(--line);cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);user-select:none;font-family:var(--mono)}
+    .tab.active{color:var(--fg);background:linear-gradient(180deg,var(--glass2),transparent);box-shadow:inset 0 0 0 1px var(--line)}
+    .drawerBody,.rightBody{padding:10px 12px 18px;overflow:auto}
+    .rightTabs{display:flex;gap:8px;padding:10px 12px 6px;flex-wrap:wrap}
+
+    .section{border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:rgba(0,0,0,.02)}
+    [data-theme="dark"] .section{background:rgba(255,255,255,.03)}
+    .section h3{margin:0 0 8px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:var(--mono);font-weight:820}
+
+    textarea,input,select{
+      width:100%;border:1px solid var(--line);background:transparent;color:var(--fg);
+      border-radius:var(--radius2);padding:10px;outline:none;font-family:var(--font);font-size:13px
+    }
+    textarea{min-height:120px;resize:vertical}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .row>*{flex:1;min-width:120px}
+
+    .modal{position:fixed;inset:0;display:none;z-index:120;padding:18px;align-items:center;justify-content:center}
+    .modalCard{
+      width:min(980px,96vw);border:1px solid var(--line);border-radius:var(--radius);
+      background:var(--glass);backdrop-filter:blur(var(--blur));box-shadow:var(--shadow);
+      padding:12px;max-height:86vh;overflow:auto;position:relative
+    }
+    .modalHead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 6px 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+    .modalHead .mh{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
+
+    #confetti{position:fixed;inset:0;pointer-events:none;z-index:140}
+
+    @media (max-width:560px){
+      .btn{font-size:11px;padding:8px 9px}
+      .btn.icon{width:38px;height:34px}
+      .pill{font-size:11px}
+      .bomb{min-width:170px}
+      .miniIcon{width:52px;height:52px}
+    }
+  </style>
+</head>
+
+<body data-theme="light" data-borders="on" data-buttons="ghost">
+<canvas id="confetti"></canvas>
+
+<!-- LEFT DRAWER -->
+<div class="drawerBack" id="drawerBack"></div>
+<div class="drawer" id="drawer">
+  <div class="drawerResizer" id="drawerResizer" title="Agrandir/réduire"></div>
+  <div class="drawerTop">
+    <div class="drawerTitle">MENU</div>
+    <button class="btn" id="drawerClose">FERMER</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="drawerBody" id="drawerBody"></div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="rightBack" id="rightBack"></div>
+<div class="rightPanel" id="rightPanel">
+  <div class="rightResizer" id="rightResizer" title="Agrandir/réduire"></div>
+  <div class="rightTop">
+    <div class="rightTitle">PANNEAU DROIT</div>
+    <button class="btn" id="rightClose">FERMER</button>
+  </div>
+  <div class="rightTabs" id="rightTabs"></div>
+  <div class="rightBody" id="rightBody"></div>
+</div>
+
+<!-- MODALS -->
+<div class="modalBack" id="modalBack"></div>
+
+<div class="modal" id="notesModal">
+  <div class="modalCard">
+    <div class="modalHead">
+      <div class="mh">NOTES</div>
+      <div class="small">Clique n’importe où pour fermer</div>
+    </div>
+    <div class="section">
+      <h3>Ajouter une note</h3>
+      <textarea id="noteInput" placeholder="Écris ici. Sortie de RAM."></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" id="noteAdd">AJOUTER</button>
+        <button class="btn" id="noteClear">VIDER</button>
+      </div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="section">
+      <h3>Historique</h3>
+      <div id="notesList" class="small"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="exportModal">
+  <div class="modalCard">
+    <div class="modalHead">
+      <div class="mh">EXPORT</div>
+      <div class="small">Clique n’importe où pour fermer</div>
+    </div>
+    <div class="section">
+      <h3>Texte / JSON / CSV</h3>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn primary" id="expText">TEXTE</button>
+        <button class="btn" id="expJSON">JSON</button>
+        <button class="btn" id="expCSV">CSV</button>
+        <button class="btn" id="expCopy">COPIER</button>
+      </div>
+      <textarea id="expOut" style="min-height:260px"></textarea>
+      <div class="small" style="margin-top:8px">Notes exclues de l’export (par design).</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="setEditModal">
+  <div class="modalCard">
+    <div class="modalHead">
+      <div class="mh">ÉDITION</div>
+      <div class="small">Clique n’importe où pour fermer</div>
+    </div>
+    <div id="setEditBody"></div>
+  </div>
+</div>
+
+<div class="wrap" id="app">
+  <div class="topbar">
+    <div class="left">
+      <button class="btn icon keepFocus" id="btnMenu" title="Menu">≡</button>
+      <button class="btn keepFocus" id="btnTheme" title="Thème"><span id="themeLabel">THÈME CLAIR</span></button>
+
+      <button class="btn keepFocus" id="btnCounters" title="Afficher/masquer">COMPTEURS</button>
+      <span class="pill hidden" id="pillTasks">0/0 tâches</span>
+      <span class="pill hidden" id="pillEto">0/0 étorions</span>
+      <span class="pill hidden" id="pillDone">0 faites</span>
+      <span class="pill hidden" id="pillTimer">00:00</span>
+
+      <button class="btn keepFocus" id="btnListToggle">LISTE</button>
+      <button class="btn keepFocus" id="btnFocus">FOCUS</button>
+    </div>
+    <div class="right">
+      <button class="btn icon keepFocus" id="btnRight" title="Panneau">▦</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="title" id="appTitle">ELIMINATOR</div>
+    <div class="tag" id="tagline"></div>
+  </div>
+
+  <div class="main">
+    <div class="barWrap">
+      <div class="barRow">
+        <div class="barLabel">progression tâches</div>
+        <div class="barLabel" id="barInfo">—</div>
+      </div>
+      <div class="bar" title="100% → diminue">
+        <div class="barFill" id="taskBarFill" style="width:100%"></div>
+        <div class="barPct" id="taskBarPct">100%</div>
+      </div>
+    </div>
+
+    <div class="current">
+      <div class="taskName" id="taskName">Aucune tâche</div>
+      <div class="chips" id="chips"></div>
+
+      <div class="actions">
+        <div class="roulette" id="btnRoulette" title="Roulette">
+          <div class="rouletteRing"></div>
+          <div class="rouletteNeedle"></div>
+          <div class="rouletteText">ROULETTE</div>
+        </div>
+
+        <div class="bomb" id="btnEtorion" title="Dégommer un étorion">
+          <div class="em">💣</div>
+          <div class="label">
+            <span>DÉGOMMER</span>
+            <small>1 ÉTORION</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="miniRow">
+        <div class="miniIcon" id="btnUndo" title="Undo">↶</div>
+        <div class="miniIcon miniLabel" id="btnNotes" title="Notes">NOTES</div>
+        <div class="miniIcon" id="btnDoneTask" title="Tâche finie">✓</div>
+        <div class="miniIcon" id="btnEditTask" title="Éditer">≋</div>
+        <div class="miniIcon" id="btnPause" title="Pause chrono">⏸</div>
+      </div>
+
+      <div class="belowList" id="belowList">
+        <div class="belowHead">
+          <div class="h">LISTE EN COURS</div>
+          <button class="btn" id="btnHideBelow">MASQUER</button>
+        </div>
+        <div id="belowTasks"></div>
+      </div>
+
+      <div class="small" id="hintLine" style="text-align:center">Une cible. Une action. Zéro tribunal intérieur.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== ELIMINATOR — single-file safe build (GitHub Pages friendly) ===== */
+const $ = (id)=>document.getElementById(id);
+const clamp = (n,a,b)=>Math.max(a, Math.min(b,n));
+const uid = ()=>Math.random().toString(36).slice(2,10)+"_"+Date.now().toString(36);
+const nowISO = ()=>new Date().toISOString();
+const LS_KEY = "eliminator_v1_singlefile";
+
+const ACCENTS = {
+  cyan:{a:"rgba(0,140,255,.16)",a2:"rgba(0,140,255,.32)"},
+  lime:{a:"rgba(0,255,140,.14)",a2:"rgba(0,255,140,.30)"},
+  violet:{a:"rgba(140,80,255,.16)",a2:"rgba(140,80,255,.32)"},
+  amber:{a:"rgba(255,180,0,.14)",a2:"rgba(255,180,0,.28)"}
+};
+const TAGLINE_POOL = [
+  "Quête principale: active. Quêtes secondaires: muselées.",
+  "Un étorion. Une incision nette. Hémostase du bazar.",
+  "Mode ninja: silencieux. Précis. Irréprochable.",
+  "Tu poses des balises dans le temps. Le temps obéit."
+];
+
+function dayKey(d=new Date()){
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,"0");
+  const da=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${da}`;
+}
+function fmtMMSS(ms){
+  const s=Math.floor(ms/1000);
+  const mm=String(Math.floor(s/60)).padStart(2,"0");
+  const ss=String(s%60).padStart(2,"0");
+  return `${mm}:${ss}`;
+}
+function escapeHTML(s){return (s||"").replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));}
+function rand(n){return Math.floor(Math.random()*n);}
+
+const defaultState = {
+  theme:"light",
+  focus:false,
+  showBelowList:false,
+  showCounters:false,
+  countersAutoHideSec:10,
+  drawerW:460,
+  rightW:520,
+  activeTab:"inbox",
+  rightTab:"sets",
+  appearance:{accentLight:"cyan",accentDark:"lime",barColorLight:"cyan",barColorDark:"lime",borders:"on",buttons:"ghost",uiScale:1,titleScale:1.18,taskScale:1.5,radius:6,barH:38,chipH:18},
+  timer:{running:true,startedAt:null,pausedAt:null,pausedTotal:0},
+  tasks:[],
+  baseline:{totalTasks:0,totalEtorions:0},
+  currentTaskId:null,
+  notes:[],
+  history:[],
+  undo:[]
+};
+
+function structuredCloneSafe(obj){
+  if(typeof structuredClone==="function") return structuredClone(obj);
+  return JSON.parse(JSON.stringify(obj));
+}
+function deepAssign(t,s){
+  for(const k in s){
+    if(s[k] && typeof s[k]==="object" && !Array.isArray(s[k]) && t[k]) deepAssign(t[k], s[k]);
+    else t[k]=s[k];
+  }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return structuredCloneSafe(defaultState);
+    const parsed = JSON.parse(raw);
+    const merged = structuredCloneSafe(defaultState);
+    deepAssign(merged, parsed);
+    return merged;
+  }catch(e){
+    return structuredCloneSafe(defaultState);
+  }
+}
+let state = loadState();
+function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+
+/* ===== Appearance ===== */
+function applyAppearance(){
+  document.body.setAttribute("data-theme", state.theme);
+  document.body.setAttribute("data-borders", state.appearance.borders || "on");
+  document.body.setAttribute("data-buttons", state.appearance.buttons || "ghost");
+  document.documentElement.style.setProperty("--uiScale", String(state.appearance.uiScale ?? 1.0));
+  document.documentElement.style.setProperty("--titleScale", String(state.appearance.titleScale ?? 1.18));
+  document.documentElement.style.setProperty("--taskScale", String(state.appearance.taskScale ?? 1.5));
+  document.documentElement.style.setProperty("--radius", `${clamp(state.appearance.radius ?? 6,0,14)}px`);
+  document.documentElement.style.setProperty("--barH", `${clamp(state.appearance.barH ?? 38,26,52)}px`);
+  document.documentElement.style.setProperty("--chipH", `${clamp(state.appearance.chipH ?? 18,12,28)}px`);
+  document.documentElement.style.setProperty("--drawerW", `${clamp(state.drawerW||460,340,920)}px`);
+  document.documentElement.style.setProperty("--rightW", `${clamp(state.rightW||520,340,980)}px`);
+
+  const accentKey = (state.theme==="light") ? (state.appearance.accentLight||"cyan") : (state.appearance.accentDark||"lime");
+  const a = ACCENTS[accentKey] || ACCENTS.cyan;
+  document.documentElement.style.setProperty("--accent", a.a);
+  document.documentElement.style.setProperty("--accent2", a.a2);
+
+  const barKey = (state.theme==="light") ? (state.appearance.barColorLight||accentKey) : (state.appearance.barColorDark||accentKey);
+  const b = ACCENTS[barKey] || a;
+  document.documentElement.style.setProperty("--barAccent", b.a);
+  document.documentElement.style.setProperty("--barAccent2", b.a2);
+
+  $("themeLabel").textContent = state.theme==="light" ? "THÈME CLAIR" : "THÈME SOMBRE";
+}
+
+/* ===== Tasks ===== */
+function isAllCapsLine(line){
+  const t=line.trim();
+  if(!t) return false;
+  const hasLetters=/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(t);
+  if(!hasLetters) return false;
+  return t===t.toUpperCase() && t.length<=90;
+}
+function parseTaskLine(line){
+  const raw=line.trim();
+  if(!raw) return null;
+  const cleaned = raw.replace(/^[-*•\s]+/, "").trim();
+  if(!cleaned) return null;
+  let et=null, title=cleaned;
+  const m = cleaned.match(/^(.*?)(?:\s*[-–—]\s*|\s+)(\d+)\s*$/);
+  if(m){ title=m[1].trim(); et=parseInt(m[2],10); }
+  title = title.replace(/\s+/g," ").trim();
+  if(!title) return null;
+  if(et!==null) et=clamp(et,1,99);
+  return {title, etorions:et};
+}
+function importFromInbox(text){
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  let cat="INBOX";
+  const out=[];
+  for(const line of lines){
+    if(isAllCapsLine(line)){ cat=line.trim().toUpperCase(); continue; }
+    const p=parseTaskLine(line);
+    if(!p) continue;
+    out.push({
+      id:uid(), title:p.title, cat,
+      etorionsTotal:p.etorions ?? 1,
+      etorionsLeft:p.etorions ?? 1,
+      pinned:false, done:false,
+      createdAt:nowISO(), doneAt:null
+    });
+  }
+  return out;
+}
+function activeTasks(){ return state.tasks.filter(t=>!t.done); }
+function getTaskById(id){ return state.tasks.find(t=>t.id===id) || null; }
+function sortTasks(list){
+  return [...list].sort((a,b)=>{
+    if(a.pinned && !b.pinned) return -1;
+    if(!a.pinned && b.pinned) return 1;
+    return (a.createdAt||"").localeCompare(b.createdAt||"");
+  });
+}
+function setCurrentTask(id){ state.currentTaskId=id; if(!state.timer.startedAt) state.timer.startedAt=Date.now(); }
+function ensureCurrentTask(){
+  const list=activeTasks();
+  if(list.length===0){ state.currentTaskId=null; return; }
+  const cur=getTaskById(state.currentTaskId);
+  if(!cur || cur.done){
+    const pinned=list.find(t=>t.pinned);
+    setCurrentTask((pinned||list[0]).id);
+  }
+}
+function recomputeBaselineIfNeeded(){
+  if(state.baseline.totalTasks===0 && state.tasks.length){
+    const a=activeTasks();
+    state.baseline.totalTasks=a.length;
+    state.baseline.totalEtorions=a.reduce((s,t)=>s+(t.etorionsTotal||0),0);
+  }
+}
+function computeProgress(){
+  const baseT=state.baseline.totalTasks||0;
+  const baseE=state.baseline.totalEtorions||0;
+  const rem=activeTasks();
+  const remT=rem.length;
+  const remE=rem.reduce((s,t)=>s+(t.etorionsLeft||0),0);
+  const pct = baseT<=0 ? 100 : clamp(Math.round((remT/baseT)*100),0,100);
+  return {baseT,baseE,remT,remE,pct};
+}
+
+/* ===== Undo ===== */
+function pushUndo(label){
+  state.undo.unshift({
+    label, at:Date.now(),
+    tasks:structuredCloneSafe(state.tasks),
+    baseline:structuredCloneSafe(state.baseline),
+    currentTaskId:state.currentTaskId
+  });
+  state.undo = state.undo.slice(0,12);
+}
+function undo(){
+  const snap = state.undo.shift();
+  if(!snap) return;
+  state.tasks = snap.tasks;
+  state.baseline = snap.baseline;
+  state.currentTaskId = snap.currentTaskId;
+  saveState();
+  renderAll();
+}
+
+/* ===== Timer ===== */
+function timerNowMs(){
+  if(!state.timer.startedAt) return 0;
+  const now=Date.now();
+  const paused=state.timer.pausedTotal||0;
+  const extraPaused=state.timer.pausedAt ? (now - state.timer.pausedAt) : 0;
+  return Math.max(0, now - state.timer.startedAt - paused - extraPaused);
+}
+function togglePause(){
+  if(!state.timer.startedAt) state.timer.startedAt=Date.now();
+  if(state.timer.pausedAt){
+    state.timer.pausedTotal = (state.timer.pausedTotal||0) + (Date.now()-state.timer.pausedAt);
+    state.timer.pausedAt=null; state.timer.running=true;
+  }else{
+    state.timer.pausedAt=Date.now(); state.timer.running=false;
+  }
+  saveState(); renderAll();
+}
+
+/* ===== Notes ===== */
+function addNote(text){
+  const t=(text||"").trim();
+  if(!t) return;
+  state.notes.unshift({id:uid(), text:t, at:nowISO()});
+}
+function renderNotes(){
+  const list=state.notes||[];
+  if(list.length===0){ $("notesList").innerHTML="<div class='small'>Aucune note.</div>"; return; }
+  $("notesList").innerHTML = list.slice(0,80).map(n=>{
+    const dt=new Date(n.at);
+    const stamp=dt.toLocaleString("fr-BE",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"});
+    return `<div style="padding:8px 6px; border-bottom:1px solid var(--line)">
+      <div style="font-family:var(--mono); color:var(--muted); font-size:11px; letter-spacing:.06em">${stamp}</div>
+      <div style="white-space:pre-wrap; font-size:13px">${escapeHTML(n.text)}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ===== Confetti (simple) ===== */
+const conf=$("confetti"), ctx=conf.getContext("2d");
+let pieces=[], raf=null;
+function resizeCanvas(){
+  conf.width=window.innerWidth*devicePixelRatio;
+  conf.height=window.innerHeight*devicePixelRatio;
+  conf.style.width=window.innerWidth+"px";
+  conf.style.height=window.innerHeight+"px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function confettiBurst(strength=1){
+  const w=window.innerWidth,h=window.innerHeight;
+  const n=Math.floor(160*strength), cx=w/2, cy=h/3;
+  for(let i=0;i<n;i++){
+    pieces.push({x:cx,y:cy,vx:(Math.random()-0.5)*12*strength,vy:(Math.random()-0.85)*16*strength,g:(0.33+Math.random()*0.25),r:2+Math.random()*4*strength,life:90+Math.random()*70,rot:Math.random()*Math.PI,vr:(Math.random()-0.5)*0.35});
+  }
+  if(!raf) raf=requestAnimationFrame(tickConfetti);
+}
+function tickConfetti(){
+  ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+  pieces = pieces.filter(p=>p.life>0);
+  for(const p of pieces){
+    p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 1;
+    ctx.save();
+    ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+    ctx.globalAlpha=0.84;
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--fg");
+    ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2);
+    ctx.restore();
+  }
+  if(pieces.length) raf=requestAnimationFrame(tickConfetti);
+  else{ cancelAnimationFrame(raf); raf=null; ctx.clearRect(0,0,window.innerWidth,window.innerHeight); }
+}
+
+/* ===== Modals ===== */
+let countersTimer=null;
+function openModal(id){ $("modalBack").style.display="block"; $(id).style.display="flex"; }
+function closeAllModals(){
+  ["notesModal","exportModal","setEditModal"].forEach(id=>{ const el=$(id); if(el) el.style.display="none"; });
+  $("modalBack").style.display="none";
+}
+$("modalBack").addEventListener("click", closeAllModals);
+["notesModal","exportModal","setEditModal"].forEach(id=> $(id).addEventListener("click", closeAllModals));
+
+/* ===== Counters ===== */
+function setCountersVisible(on, autoHide=true){
+  state.showCounters=!!on;
+  const pills=["pillTasks","pillEto","pillDone","pillTimer"].map($);
+  pills.forEach(p=>p.classList.toggle("hidden", !state.showCounters));
+  saveState();
+  if(countersTimer) clearTimeout(countersTimer);
+  if(on && autoHide){
+    countersTimer=setTimeout(()=>{
+      state.showCounters=false;
+      pills.forEach(p=>p.classList.add("hidden"));
+      saveState();
+    }, clamp(state.countersAutoHideSec||10,3,30)*1000);
+  }
+}
+
+/* ===== Drawer / Right ===== */
+function openDrawer(){ $("drawerBack").style.display="block"; $("drawer").classList.add("open"); renderDrawer(); }
+function closeDrawer(){ $("drawerBack").style.display="none"; $("drawer").classList.remove("open"); }
+function openRight(){ $("rightBack").style.display="block"; $("rightPanel").classList.add("open"); renderRight(); }
+function closeRight(){ $("rightBack").style.display="none"; $("rightPanel").classList.remove("open"); }
+
+function initResizer(resId, which){
+  const res=$(resId);
+  let dragging=false,startX=0,startW=0;
+  const down = (x)=>{
+    dragging=true; startX=x;
+    startW = clamp(which==="left" ? (state.drawerW||460) : (state.rightW||520), 340, 980);
+  };
+  const move = (x)=>{
+    if(!dragging) return;
+    const dx=x-startX;
+    if(which==="left") state.drawerW = clamp(startW+dx,340,980);
+    else state.rightW = clamp(startW-dx,340,980);
+    applyAppearance();
+  };
+  const up = ()=>{
+    if(!dragging) return;
+    dragging=false; saveState();
+  };
+  res.addEventListener("mousedown",(e)=>{ down(e.clientX); e.preventDefault(); });
+  window.addEventListener("mousemove",(e)=>move(e.clientX));
+  window.addEventListener("mouseup",up);
+  res.addEventListener("touchstart",(e)=>{ down(e.touches[0].clientX); e.preventDefault(); },{passive:false});
+  window.addEventListener("touchmove",(e)=>move(e.touches[0].clientX),{passive:true});
+  window.addEventListener("touchend",up);
+}
+initResizer("drawerResizer","left");
+initResizer("rightResizer","right");
+
+/* ===== Render ===== */
+function setRandomTagline(force=false){
+  const el=$("tagline");
+  if(force || !el.textContent.trim() || Math.random()<0.20) el.textContent = TAGLINE_POOL[rand(TAGLINE_POOL.length)];
+}
+function renderHUD(){
+  recomputeBaselineIfNeeded();
+  const p=computeProgress();
+  $("pillTasks").textContent = `${p.remT}/${p.baseT} tâches`;
+  $("pillEto").textContent = `${p.remE}/${p.baseE} étorions`;
+  const done=(p.baseT-p.remT);
+  $("pillDone").textContent = `${done} faites`;
+}
+function renderTimer(){ $("pillTimer").textContent = fmtMMSS(timerNowMs()); }
+
+function renderProgress(){
+  const p=computeProgress();
+  $("taskBarFill").style.width = `${p.pct}%`;
+  $("taskBarPct").textContent = `${p.pct}%`;
+  $("barInfo").textContent = `${p.remT} restantes sur ${p.baseT}`;
+}
+function renderCurrent(){
+  ensureCurrentTask();
+  const t=getTaskById(state.currentTaskId);
+  if(!t){
+    $("taskName").textContent="Aucune tâche";
+    $("chips").innerHTML="";
+    $("btnEtorion").style.opacity=0.45;
+    $("btnEtorion").style.pointerEvents="none";
+    return;
+  }
+  $("btnEtorion").style.opacity=1;
+  $("btnEtorion").style.pointerEvents="auto";
+  $("taskName").textContent=t.title;
+
+  const total=t.etorionsTotal||1;
+  const left=(typeof t.etorionsLeft==="number") ? t.etorionsLeft : total;
+  $("chips").innerHTML = Array.from({length:total}, (_,i)=>`<div class="chip ${i<left?"on":""}"></div>`).join("");
+}
+function applyListVisible(){
+  $("belowList").classList.toggle("show", !!state.showBelowList && !state.focus);
+}
+function moveTask(id,delta){
+  const i=state.tasks.findIndex(t=>t.id===id);
+  if(i<0) return;
+  const j=clamp(i+delta,0,state.tasks.length-1);
+  const [it]=state.tasks.splice(i,1);
+  state.tasks.splice(j,0,it);
+}
+function renderBelowList(){
+  const box=$("belowTasks");
+  const list=sortTasks(activeTasks());
+  if(list.length===0){ box.innerHTML="<div class='small'>Aucune tâche.</div>"; return; }
+  box.innerHTML = list.slice(0,120).map(t=>{
+    const et=t.etorionsTotal||1, left=t.etorionsLeft??et;
+    const isCur=(t.id===state.currentTaskId);
+    return `
+      <div class="taskRow" style="${isCur?"background:linear-gradient(180deg,var(--glass2),transparent); border-radius:var(--radius2); border:1px solid var(--line)":""}">
+        <div class="t">${escapeHTML(t.title)}</div>
+        <div class="meta">${left}/${et}</div>
+        <div class="tools">
+          <div class="toolBtn" data-act="up" data-id="${t.id}">↑</div>
+          <div class="toolBtn" data-act="down" data-id="${t.id}">↓</div>
+          <div class="toolBtn" data-act="pin" data-id="${t.id}">${t.pinned?"■":"□"}</div>
+          <div class="toolBtn" data-act="go" data-id="${t.id}">◎</div>
+          <div class="toolBtn" data-act="done" data-id="${t.id}">✓</div>
+        </div>
+      </div>
+    `;
+  }).join("");
+  box.querySelectorAll(".toolBtn").forEach(b=>{
+    b.onclick=()=>{
+      const id=b.getAttribute("data-id");
+      const act=b.getAttribute("data-act");
+      const t=getTaskById(id); if(!t) return;
+      pushUndo("listAction");
+      if(act==="up") moveTask(id,-1);
+      if(act==="down") moveTask(id,1);
+      if(act==="pin") t.pinned=!t.pinned;
+      if(act==="go") setCurrentTask(id);
+      if(act==="done") completeTask(id);
+      saveState(); renderAll();
+    };
+  });
+}
+function renderAll(){
+  applyAppearance();
+  $("app").classList.toggle("focusOn", !!state.focus);
+  setRandomTagline();
+  recomputeBaselineIfNeeded();
+  ensureCurrentTask();
+
+  renderHUD();
+  renderProgress();
+  renderCurrent();
+  renderBelowList();
+  applyListVisible();
+
+  setCountersVisible(state.showCounters,false);
+
+  $("btnUndo").style.opacity = state.undo.length ? 1 : 0.45;
+  $("btnUndo").style.pointerEvents = state.undo.length ? "auto" : "none";
+  $("btnPause").textContent = state.timer.pausedAt ? "▶" : "⏸";
+}
+
+/* ===== Complete / Etorion ===== */
+function degommeEtorion(){
+  const t=getTaskById(state.currentTaskId);
+  if(!t || t.done) return;
+  pushUndo("etorion");
+  t.etorionsLeft = clamp((t.etorionsLeft ?? t.etorionsTotal ?? 1) - 1, 0, 99);
+  saveState();
+  if(t.etorionsLeft<=0) completeTask(t.id);
+  else renderAll();
+}
+function completeTask(id){
+  const t=getTaskById(id);
+  if(!t || t.done) return;
+  pushUndo("taskComplete");
+  t.done=true; t.doneAt=nowISO();
+  confettiBurst(1.15);
+  ensureCurrentTask();
+  saveState();
+  renderAll();
+}
+
+/* ===== Drawer content (minimal but functional) ===== */
+const TAB_DEFS=[{key:"inbox",label:"INBOX"},{key:"liste",label:"LISTE"},{key:"app",label:"APP"}];
+function buildTabs(){
+  const el=$("tabs"); el.innerHTML="";
+  TAB_DEFS.forEach(t=>{
+    const b=document.createElement("div");
+    b.className="tab"+(state.activeTab===t.key?" active":"");
+    b.textContent=t.label;
+    b.onclick=()=>{ state.activeTab=t.key; saveState(); renderDrawer(); };
+    el.appendChild(b);
+  });
+}
+function mkSection(title){
+  const s=document.createElement("div"); s.className="section";
+  const h=document.createElement("h3"); h.textContent=title;
+  s.appendChild(h); return s;
+}
+function renderDrawer(){
+  buildTabs();
+  const body=$("drawerBody"); body.innerHTML="";
+  if(state.activeTab==="inbox") body.appendChild(viewInbox());
+  if(state.activeTab==="liste") body.appendChild(viewListe());
+  if(state.activeTab==="app") body.appendChild(viewApp());
+}
+function viewInbox(){
+  const wrap=document.createElement("div");
+  const s=mkSection("Importer des tâches");
+  const ta=document.createElement("textarea");
+  ta.placeholder="COLLE ICI.\n\nADMIN\n- Mail X 2\n- Appeler Y 1\n\nCLINIQUE\n- Rapport Z 6\n\n(majuscule = catégorie)";
+  s.appendChild(ta);
+
+  const row=document.createElement("div"); row.className="row"; row.style.marginTop="8px";
+  const b1=document.createElement("button"); b1.className="btn primary"; b1.textContent="IMPORTER (RESET BASELINE)";
+  b1.onclick=()=>{
+    const items=importFromInbox(ta.value||"");
+    if(!items.length) return;
+    pushUndo("import");
+    state.tasks.push(...items);
+    state.baseline.totalTasks = activeTasks().length;
+    state.baseline.totalEtorions = activeTasks().reduce((a,t)=>a+(t.etorionsTotal||0),0);
+    ensureCurrentTask();
+    saveState(); renderAll();
+    ta.value=""; closeDrawer();
+  };
+  const b2=document.createElement("button"); b2.className="btn"; b2.textContent="AJOUTER (SANS RESET)";
+  b2.onclick=()=>{
+    const items=importFromInbox(ta.value||"");
+    if(!items.length) return;
+    pushUndo("append");
+    state.tasks.push(...items);
+    recomputeBaselineIfNeeded();
+    ensureCurrentTask();
+    saveState(); renderAll();
+    ta.value="";
+  };
+  row.appendChild(b1); row.appendChild(b2);
+  s.appendChild(row);
+
+  const s2=mkSection("Outils");
+  const r2=document.createElement("div"); r2.className="row";
+  const b3=document.createElement("button"); b3.className="btn"; b3.textContent="SUPPRIMER FINIES";
+  b3.onclick=()=>{
+    pushUndo("clearDone");
+    state.tasks = state.tasks.filter(t=>!t.done);
+    state.baseline.totalTasks = activeTasks().length;
+    state.baseline.totalEtorions = activeTasks().reduce((a,t)=>a+(t.etorionsTotal||0),0);
+    ensureCurrentTask();
+    saveState(); renderAll();
+  };
+  const b4=document.createElement("button"); b4.className="btn"; b4.textContent="TOUT VIDER";
+  b4.onclick=()=>{
+    if(!confirm("Tout effacer ?")) return;
+    pushUndo("wipe");
+    state.tasks=[];
+    state.baseline={totalTasks:0,totalEtorions:0};
+    state.currentTaskId=null;
+    saveState(); renderAll();
+  };
+  r2.appendChild(b3); r2.appendChild(b4);
+  s2.appendChild(r2);
+
+  wrap.appendChild(s);
+  wrap.appendChild(document.createElement("div")).style.height="10px";
+  wrap.appendChild(s2);
+  return wrap;
+}
+function viewListe(){
+  const wrap=document.createElement("div");
+  const s=mkSection("Liste");
+  const box=document.createElement("div");
+
+  const act=sortTasks(activeTasks());
+  const done=state.tasks.filter(t=>t.done).slice().sort((a,b)=>(b.doneAt||"").localeCompare(a.doneAt||"")).slice(0,20);
+
+  box.innerHTML = act.length ? act.map(t=>{
+    const et=t.etorionsTotal||1, left=t.etorionsLeft??et;
+    return `
+      <div class="taskRow">
+        <div class="t">${escapeHTML(t.title)} <span class="small">[${escapeHTML(t.cat||"INBOX")}]</span></div>
+        <div class="meta">${left}/${et}</div>
+        <div class="tools">
+          <div class="toolBtn" data-a="pin" data-id="${t.id}">${t.pinned?"■":"□"}</div>
+          <div class="toolBtn" data-a="go" data-id="${t.id}">◎</div>
+          <div class="toolBtn" data-a="edit" data-id="${t.id}">≋</div>
+          <div class="toolBtn" data-a="done" data-id="${t.id}">✓</div>
+        </div>
+      </div>
+    `;
+  }).join("") : `<div class="small">Aucune tâche active.</div>`;
+
+  if(done.length){
+    box.innerHTML += `<div style="height:10px"></div><div class="small">FINIES (20)</div>`;
+    box.innerHTML += done.map(t=>`
+      <div class="taskRow" style="opacity:.55">
+        <div class="t">${escapeHTML(t.title)}</div>
+        <div class="meta">✓</div>
+        <div class="tools">
+          <div class="toolBtn" data-a="revive" data-id="${t.id}">↺</div>
+        </div>
+      </div>`).join("");
+  }
+
+  s.appendChild(box);
+  wrap.appendChild(s);
+
+  box.querySelectorAll(".toolBtn").forEach(b=>{
+    b.onclick=()=>{
+      const id=b.getAttribute("data-id");
+      const act=b.getAttribute("data-a");
+      const t=getTaskById(id); if(!t) return;
+      pushUndo("listeAction");
+      if(act==="pin") t.pinned=!t.pinned;
+      if(act==="go") setCurrentTask(id);
+      if(act==="done") completeTask(id);
+      if(act==="revive"){ t.done=false; t.doneAt=null; t.etorionsLeft=t.etorionsTotal||1; }
+      if(act==="edit") openTaskEditor(id);
+      saveState(); renderAll(); renderDrawer();
+    };
+  });
+
+  const s2=mkSection("Export");
+  const r=document.createElement("div"); r.className="row";
+  const ex=document.createElement("button"); ex.className="btn primary"; ex.textContent="EXPORT";
+  ex.onclick=()=>{ openModal("exportModal"); renderExport("text"); };
+  r.appendChild(ex); s2.appendChild(r);
+  wrap.appendChild(document.createElement("div")).style.height="10px";
+  wrap.appendChild(s2);
+
+  return wrap;
+}
+function viewApp(){
+  const wrap=document.createElement("div");
+  const s=mkSection("Apparence");
+  const row=document.createElement("div"); row.className="row";
+
+  const borders=document.createElement("select");
+  [["on","Bords ON"],["off","Bords OFF"]].forEach(([v,txt])=>{ const o=document.createElement("option"); o.value=v; o.textContent=txt; borders.appendChild(o); });
+  borders.value=state.appearance.borders||"on";
+  borders.onchange=()=>{ state.appearance.borders=borders.value; saveState(); renderAll(); };
+
+  const buttons=document.createElement("select");
+  [["ghost","Boutons GHOST"],["filled","Boutons FILLED"]].forEach(([v,txt])=>{ const o=document.createElement("option"); o.value=v; o.textContent=txt; buttons.appendChild(o); });
+  buttons.value=state.appearance.buttons||"ghost";
+  buttons.onchange=()=>{ state.appearance.buttons=buttons.value; saveState(); renderAll(); };
+
+  row.appendChild(borders);
+  row.appendChild(buttons);
+  s.appendChild(row);
+
+  wrap.appendChild(s);
+  return wrap;
+}
+
+/* ===== Right panel (super simple placeholder) ===== */
+const RIGHT_TABS=[{key:"help",label:"AIDE"}];
+function buildRightTabs(){
+  const el=$("rightTabs"); el.innerHTML="";
+  RIGHT_TABS.forEach(t=>{
+    const b=document.createElement("div");
+    b.className="tab active";
+    b.textContent=t.label;
+    el.appendChild(b);
+  });
+}
+function renderRight(){
+  buildRightTabs();
+  const body=$("rightBody"); body.innerHTML="";
+  const s=mkSection("Raccourcis");
+  const d=document.createElement("div");
+  d.className="small";
+  d.style.whiteSpace="pre-wrap";
+  d.textContent =
+`Espace : dégomme 1 étorion
+R : roulette
+Ctrl/Cmd+Z : undo
+Esc : fermer modales/panneaux`;
+  s.appendChild(d);
+  body.appendChild(s);
+}
+
+/* ===== Safe Task editor ===== */
+function openTaskEditor(taskId){
+  const t=getTaskById(taskId);
+  if(!t) return;
+  const root=$("setEditBody");
+  root.innerHTML = `
+    <div class="section">
+      <h3>Éditer tâche</h3>
+      <div class="row">
+        <input id="teTitle" value="${escapeHTML(t.title)}" placeholder="Titre">
+        <input id="teCat" value="${escapeHTML(t.cat||"")}" placeholder="Catégorie">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="teEto" type="number" min="1" max="99" step="1" value="${t.etorionsTotal||1}">
+        <select id="tePin">
+          <option value="0">Non épinglée</option>
+          <option value="1">Épinglée</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="teSave">SAUVER</button>
+        <button class="btn" id="teDel">SUPPRIMER</button>
+      </div>
+    </div>
+  `;
+  $("tePin").value = t.pinned ? "1":"0";
+  $("teSave").onclick = (e)=>{
+    e.stopPropagation();
+    pushUndo("taskEdit");
+    t.title = ($("teTitle").value||"").trim() || t.title;
+    t.cat = ($("teCat").value||"").trim().toUpperCase();
+    const nt=clamp(parseInt($("teEto").value,10)||1,1,99);
+    const oldTot=t.etorionsTotal||1;
+    const oldLeft=t.etorionsLeft ?? oldTot;
+    t.etorionsTotal=nt;
+    t.etorionsLeft=clamp(oldLeft + (nt-oldTot), 0, nt);
+    t.pinned = $("tePin").value==="1";
+    saveState(); renderAll(); renderDrawer(); closeAllModals();
+  };
+  $("teDel").onclick = (e)=>{
+    e.stopPropagation();
+    if(!confirm("Supprimer cette tâche ?")) return;
+    pushUndo("taskDelete");
+    state.tasks = state.tasks.filter(x=>x.id!==t.id);
+    ensureCurrentTask();
+    saveState(); renderAll(); renderDrawer(); closeAllModals();
+  };
+  openModal("setEditModal");
+}
+
+/* ===== Export ===== */
+let exportMode="text";
+function tasksAsText(){
+  const act=sortTasks(activeTasks());
+  const byCat={};
+  act.forEach(t=>{ const c=(t.cat||"INBOX").trim()||"INBOX"; (byCat[c] ||= []).push(t); });
+  const cats=Object.keys(byCat).sort((a,b)=>a.localeCompare(b));
+  const lines=[];
+  cats.forEach(c=>{
+    lines.push(c.toUpperCase());
+    byCat[c].forEach(t=>{
+      const et=t.etorionsTotal||1, left=t.etorionsLeft??et;
+      lines.push(`- ${t.title} — ${left}/${et}`);
+    });
+    lines.push("");
+  });
+  return lines.join("\n").trim();
+}
+function tasksAsCSV(){
+  const rows=[["title","cat","etorions_total","etorions_left","pinned","done","createdAt","doneAt"]];
+  state.tasks.forEach(t=>{
+    rows.push([t.title||"",t.cat||"",String(t.etorionsTotal||1),String(t.etorionsLeft ?? (t.etorionsTotal||1)),t.pinned?"1":"0",t.done?"1":"0",t.createdAt||"",t.doneAt||""]);
+  });
+  return rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(",")).join("\n");
+}
+function renderExport(mode){
+  exportMode=mode||exportMode;
+  if(exportMode==="text") $("expOut").value = tasksAsText();
+  if(exportMode==="json") $("expOut").value = JSON.stringify({meta:{exportedAt:nowISO(),key:LS_KEY},state}, null, 2);
+  if(exportMode==="csv") $("expOut").value = tasksAsCSV();
+}
+
+/* ===== Controls ===== */
+$("btnMenu").onclick = (e)=>{ e.stopPropagation(); openDrawer(); };
+$("drawerClose").onclick = (e)=>{ e.stopPropagation(); closeDrawer(); };
+$("drawerBack").onclick = closeDrawer;
+
+$("btnRight").onclick = (e)=>{ e.stopPropagation(); openRight(); };
+$("rightClose").onclick = (e)=>{ e.stopPropagation(); closeRight(); };
+$("rightBack").onclick = closeRight;
+
+$("btnTheme").onclick = ()=>{
+  state.theme = (state.theme==="light") ? "dark" : "light";
+  saveState(); renderAll();
+};
+$("btnCounters").onclick = ()=> setCountersVisible(!state.showCounters, true);
+$("btnListToggle").onclick = ()=>{ state.showBelowList=!state.showBelowList; saveState(); renderAll(); };
+$("btnHideBelow").onclick = ()=>{ state.showBelowList=false; saveState(); renderAll(); };
+$("btnFocus").onclick = ()=>{ state.focus=!state.focus; saveState(); renderAll(); };
+
+$("btnRoulette").onclick = ()=>{
+  const btn=$("btnRoulette");
+  btn.classList.remove("rouletteSpin"); void btn.offsetWidth; btn.classList.add("rouletteSpin");
+  const list=sortTasks(activeTasks());
+  if(!list.length) return;
+  const pinned=list.filter(t=>t.pinned);
+  const pool=pinned.length?pinned:list;
+  const pick=pool[rand(pool.length)];
+  pushUndo("roulette");
+  setCurrentTask(pick.id);
+  saveState();
+  renderAll();
+};
+
+$("btnEtorion").onclick = degommeEtorion;
+$("btnUndo").onclick = (e)=>{ e.stopPropagation(); undo(); };
+$("btnNotes").onclick = (e)=>{ e.stopPropagation(); renderNotes(); openModal("notesModal"); };
+$("btnDoneTask").onclick = ()=>{ const t=getTaskById(state.currentTaskId); if(t) completeTask(t.id); };
+$("btnEditTask").onclick = ()=>{ const t=getTaskById(state.currentTaskId); if(t) openTaskEditor(t.id); };
+$("btnPause").onclick = togglePause;
+
+$("noteAdd").onclick = (e)=>{ e.stopPropagation(); addNote($("noteInput").value); $("noteInput").value=""; saveState(); renderNotes(); };
+$("noteClear").onclick = (e)=>{ e.stopPropagation(); if(!confirm("Vider toutes les notes ?")) return; state.notes=[]; saveState(); renderNotes(); };
+
+$("expText").onclick = ()=>renderExport("text");
+$("expJSON").onclick = ()=>renderExport("json");
+$("expCSV").onclick = ()=>renderExport("csv");
+$("expCopy").onclick = async ()=>{
+  try{ await navigator.clipboard.writeText($("expOut").value||""); }
+  catch(e){ alert("Copie impossible (clipboard)."); }
+};
+
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="Escape"){ closeAllModals(); closeDrawer(); closeRight(); }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="z"){ e.preventDefault(); undo(); }
+  const tag=(document.activeElement?.tagName||"").toLowerCase();
+  if(e.key===" " && !["input","textarea","select"].includes(tag)){ e.preventDefault(); degommeEtorion(); }
+  if(e.key.toLowerCase()==="r" && !["input","textarea","select"].includes(tag)){
+    const list=sortTasks(activeTasks()); if(!list.length) return;
+    const pick=list[rand(list.length)];
+    setCurrentTask(pick.id); saveState(); renderAll();
+  }
+});
+
+/* ===== Loop ===== */
+let interval=null;
+function startTimerLoop(){
+  if(interval) clearInterval(interval);
+  interval=setInterval(()=>{
+    if(state.showCounters) renderTimer();
+    $("btnPause").textContent = state.timer.pausedAt ? "▶" : "⏸";
+  }, 500);
+}
+
+/* ===== Boot ===== */
+(function boot(){
+  applyAppearance();
+  setRandomTagline(true);
+  recomputeBaselineIfNeeded();
+  ensureCurrentTask();
+  renderAll();
+  startTimerLoop();
+})();
+</script>
+</body>
+</html>
